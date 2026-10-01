@@ -35,9 +35,9 @@ spring:
     # port: 587
     # username: tranhoan.word@gmail.com
     # password: vvpa lbfb cujx xrwn
-    host: ${MAIL_HOST:smtp-relay.brevo.com}
-    port: ${MAIL_PORT:2525}
-    username: ${MAIL_USERNAME:xanhdecor04@gmail.com}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:tranhoan.word@gmail.com}
     password: ${MAIL_PASSWORD:}
     properties:
       mail:

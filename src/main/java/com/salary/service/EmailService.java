@@ -1,78 +1,55 @@
 package com.salary.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salary.model.Employee;
 import com.salary.model.SalaryRecord;
 import com.salary.util.PdfGenerator;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
+    private final JavaMailSender mailSender;
     private final PdfGenerator pdfGenerator;
-    private final ObjectMapper objectMapper;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
-
-    @Value("${spring.mail.password}")
-    private String apiKey;
 
     @Value("${app.company.name}")
     private String companyName;
 
     /**
-     * Gửi phiếu lương PDF qua Brevo API
+     * Gửi phiếu lương PDF qua email cho nhân viên
      */
     public void sendPayslipEmail(SalaryRecord record) throws Exception {
-        String finalApiKey = "xkeysib-980cc4fe28b1164098bcfd3ae5784ce0e6f7829268" + "07c81f15084edd73069385-OjTVX6EVzFZg4EDY";
-
         Employee employee = record.getEmployee();
         byte[] pdfBytes = pdfGenerator.generatePayslipPdf(record);
-        String base64Pdf = Base64.getEncoder().encodeToString(pdfBytes);
 
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setFrom(fromEmail, companyName);
+        helper.setTo(employee.getEmail());
+        helper.setSubject(buildSubject(record));
+        helper.setText(buildHtmlBody(record), true);
+
+        // Đính kèm file PDF
         String fileName = String.format("PhieuLuong_T%02d_%d.pdf",
                 record.getSalaryMonth(), record.getSalaryYear());
+        helper.addAttachment(fileName, new ByteArrayResource(pdfBytes), "application/pdf");
 
-        Map<String, Object> payload = Map.of(
-                "sender", Map.of("name", companyName, "email", fromEmail),
-                "to", List.of(Map.of("email", employee.getEmail(), "name", employee.getFullName())),
-                "subject", buildSubject(record),
-                "htmlContent", buildHtmlBody(record),
-                "attachment", List.of(Map.of("content", base64Pdf, "name", fileName))
-        );
-
-        String jsonPayload = objectMapper.writeValueAsString(payload);
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                .header("api-key", finalApiKey)
-                .header("accept", "application/json")
-                .header("content-type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            log.info("✅ Đã gửi phiếu lương API cho {} - {} ({})", employee.getFullName(), employee.getEmail(), fileName);
-        } else {
-            throw new RuntimeException("Lỗi API Brevo: " + response.statusCode() + " - " + response.body());
-        }
+        mailSender.send(message);
+        log.info("✅ Đã gửi phiếu lương cho {} - {} ({})", employee.getFullName(), employee.getEmail(), fileName);
     }
 
     private String buildSubject(SalaryRecord record) {
