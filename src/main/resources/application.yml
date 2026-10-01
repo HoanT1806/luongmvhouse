@@ -30,10 +30,14 @@ spring:
 
   # Email Configuration (Gmail SMTP - thay thế bằng config thực tế)
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: tranhoan.word@gmail.com
-    password: vvpa lbfb cujx xrwn
+    # host: smtp.gmail.com
+    # port: 587
+    # username: tranhoan.word@gmail.com
+    # password: vvpa lbfb cujx xrwn
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:tranhoan.word@gmail.com}
+    password: ${MAIL_PASSWORD:vvpa lbfb cujx xrwn}
     properties:
       mail:
         smtp:
