@@ -79,8 +79,10 @@ public class PdfGenerator {
         PdfFont boldFont;
         PdfFont regularFont;
         try {
-            boldFont = PdfFontFactory.createFont("C:/Windows/Fonts/arialbd.ttf", PdfEncodings.IDENTITY_H);
-            regularFont = PdfFontFactory.createFont("C:/Windows/Fonts/arial.ttf", PdfEncodings.IDENTITY_H);
+            org.springframework.core.io.ClassPathResource regularRes = new org.springframework.core.io.ClassPathResource("fonts/Roboto-Regular.ttf");
+            org.springframework.core.io.ClassPathResource boldRes = new org.springframework.core.io.ClassPathResource("fonts/Roboto-Bold.ttf");
+            boldFont = PdfFontFactory.createFont(boldRes.getInputStream().readAllBytes(), PdfEncodings.IDENTITY_H);
+            regularFont = PdfFontFactory.createFont(regularRes.getInputStream().readAllBytes(), PdfEncodings.IDENTITY_H);
         } catch (Exception e) {
             boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
             regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
