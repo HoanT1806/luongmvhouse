@@ -38,8 +38,9 @@ public class EmailService {
      * Gửi phiếu lương PDF qua Brevo API
      */
     public void sendPayslipEmail(SalaryRecord record) throws Exception {
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            throw new RuntimeException("Chưa lấy được API Key từ Railway! Vui lòng kiểm tra lại biến MAIL_PASSWORD.");
+        String finalApiKey = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : System.getenv("MAIL_PASSWORD");
+        if (finalApiKey == null || finalApiKey.trim().isEmpty()) {
+            throw new RuntimeException("Chưa lấy được API Key từ Railway! Vui lòng kiểm tra lại biến MAIL_PASSWORD trên web Railway (xem có đúng tên và đúng môi trường chưa).");
         }
 
         Employee employee = record.getEmployee();
@@ -62,7 +63,7 @@ public class EmailService {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                .header("api-key", apiKey)
+                .header("api-key", finalApiKey)
                 .header("accept", "application/json")
                 .header("content-type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
