@@ -28,6 +28,7 @@ spring:
     cache: false
     encoding: UTF-8
 
+
   # Email Configuration (Gmail SMTP - thay thế bằng config thực tế)
   mail:
     # host: smtp.gmail.com
