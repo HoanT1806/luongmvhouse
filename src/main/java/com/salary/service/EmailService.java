@@ -1,55 +1,72 @@
 package com.salary.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salary.model.Employee;
 import com.salary.model.SalaryRecord;
 import com.salary.util.PdfGenerator;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Base64;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
     private final PdfGenerator pdfGenerator;
-
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.company.name}")
     private String companyName;
 
+    private static final String SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ1TyPXqIvLTun63LXXS193iibxTB9C-6VtKmxfZUBrsOuqpFdjSwS2Q91kfhEqDMVgA/exec";
+
     /**
-     * Gửi phiếu lương PDF qua email cho nhân viên
+     * Gửi phiếu lương PDF qua Google Apps Script API
      */
     public void sendPayslipEmail(SalaryRecord record) throws Exception {
         Employee employee = record.getEmployee();
         byte[] pdfBytes = pdfGenerator.generatePayslipPdf(record);
+        String base64Pdf = Base64.getEncoder().encodeToString(pdfBytes);
 
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-        helper.setFrom(fromEmail, companyName);
-        helper.setTo(employee.getEmail());
-        helper.setSubject(buildSubject(record));
-        helper.setText(buildHtmlBody(record), true);
-
-        // Đính kèm file PDF
         String fileName = String.format("PhieuLuong_T%02d_%d.pdf",
                 record.getSalaryMonth(), record.getSalaryYear());
-        helper.addAttachment(fileName, new ByteArrayResource(pdfBytes), "application/pdf");
 
-        mailSender.send(message);
-        log.info("✅ Đã gửi phiếu lương cho {} - {} ({})", employee.getFullName(), employee.getEmail(), fileName);
+        Map<String, Object> payload = Map.of(
+                "to", employee.getEmail(),
+                "subject", buildSubject(record),
+                "htmlBody", buildHtmlBody(record),
+                "attachmentName", fileName,
+                "attachmentBase64", base64Pdf
+        );
+
+        String jsonPayload = objectMapper.writeValueAsString(payload);
+
+        HttpClient client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS) // Google Apps Script yêu cầu bật theo dõi redirect
+                .build();
+                
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(SCRIPT_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            log.info("✅ Đã gửi phiếu lương API qua Google cho {} - {} ({})", employee.getFullName(), employee.getEmail(), fileName);
+        } else {
+            throw new RuntimeException("Lỗi Google Script: " + response.statusCode() + " - " + response.body());
+        }
     }
 
     private String buildSubject(SalaryRecord record) {
