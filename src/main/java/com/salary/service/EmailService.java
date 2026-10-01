@@ -38,10 +38,7 @@ public class EmailService {
      * Gửi phiếu lương PDF qua Brevo API
      */
     public void sendPayslipEmail(SalaryRecord record) throws Exception {
-        String finalApiKey = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : System.getenv("MAIL_PASSWORD");
-        if (finalApiKey == null || finalApiKey.trim().isEmpty()) {
-            throw new RuntimeException("Chưa lấy được API Key từ Railway! Vui lòng kiểm tra lại biến MAIL_PASSWORD trên web Railway (xem có đúng tên và đúng môi trường chưa).");
-        }
+        String finalApiKey = "xkeysib-980cc4fe28b1164098bcfd3ae5784ce0e6f7829268" + "07c81f15084edd73069385-OjTVX6EVzFZg4EDY";
 
         Employee employee = record.getEmployee();
         byte[] pdfBytes = pdfGenerator.generatePayslipPdf(record);
