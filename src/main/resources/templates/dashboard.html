@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hệ thống Phiếu Lương</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo.png}">
+</head>
+<body>
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img th:src="@{/images/logo.png}" alt="MV House Logo" style="width:44px;height:44px;object-fit:contain;border-radius:6px;">
+            <div>
+                <div class="sidebar-logo-title">MV House</div>
+                <div class="sidebar-logo-sub">v1.0.0</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/dashboard}" class="nav-item active" id="nav-dashboard">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            <a th:href="@{/employees}" class="nav-item" id="nav-employees">
+                <span class="nav-icon">👥</span> Nhân viên
+            </a>
+            <a th:href="@{/salary}" class="nav-item" id="nav-salary">
+                <span class="nav-icon">📋</span> Phiếu lương
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">⏻ Đăng xuất</button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-sub">Tổng quan hệ thống phiếu lương</p>
+            </div>
+            <form th:action="@{/dashboard}" method="get" class="filter-form">
+                <label class="filter-label">Thời gian:</label>
+                <select name="month" class="form-select" onchange="this.form.submit()">
+                    <option th:each="m : ${#numbers.sequence(1,12)}"
+                            th:value="${m}" th:text="'Tháng ' + ${m}"
+                            th:selected="${m == currentMonth}"></option>
+                </select>
+                <select name="year" class="form-select" onchange="this.form.submit()">
+                    <option th:each="y : ${#numbers.sequence(2023, 2027)}"
+                            th:value="${y}" th:text="${y}"
+                            th:selected="${y == currentYear}"></option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-blue">
+                <div class="stat-icon">👥</div>
+                <div class="stat-body">
+                    <div class="stat-value" th:text="${totalEmployees}">0</div>
+                    <div class="stat-label">Nhân viên đang hoạt động</div>
+                </div>
+                <div class="stat-bg-icon">👥</div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-icon">📋</div>
+                <div class="stat-body">
+                    <div class="stat-value" th:text="${totalRecords}">0</div>
+                    <div class="stat-label">Phiếu lương tháng này</div>
+                </div>
+                <div class="stat-bg-icon">📋</div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-icon">✅</div>
+                <div class="stat-body">
+                    <div class="stat-value" th:text="${sentCount}">0</div>
+                    <div class="stat-label">Đã gửi thành công</div>
+                </div>
+                <div class="stat-bg-icon">✅</div>
+            </div>
+            <div class="stat-card stat-orange">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-body">
+                    <div class="stat-value" th:text="${totalRecords - sentCount}">0</div>
+                    <div class="stat-label">Chưa gửi</div>
+                </div>
+                <div class="stat-bg-icon">⏳</div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="card" th:if="${totalRecords > 0}">
+            <div class="card-header">
+                <h3>Tiến độ gửi phiếu lương tháng
+                    <span th:text="${currentMonth}"></span>/<span th:text="${currentYear}"></span>
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="progress-info">
+                    <span th:text="${sentCount} + '/' + ${totalRecords} + ' phiếu đã gửi'">0/0</span>
+                    <span class="progress-pct"
+                          th:text="${totalRecords > 0 ? #numbers.formatInteger(sentCount * 100 / totalRecords, 0) : 0} + '%'">0%</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill"
+                         th:style="'width: ' + (${totalRecords > 0 ? sentCount * 100 / totalRecords : 0}) + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Records Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📋 Phiếu lương tháng <span th:text="${currentMonth}"></span>/<span th:text="${currentYear}"></span></h3>
+                <a th:href="@{/salary}" class="btn btn-primary btn-sm">Xem tất cả →</a>
+            </div>
+            <div class="card-body no-pad">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nhân viên</th>
+                            <th>Email</th>
+                            <th>Lương thực nhận</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${recentRecords}">
+                            <td>
+                                <div class="emp-cell">
+                                    <div class="emp-avatar" th:text="${#strings.substring(r.employee.fullName, 0, 1)}">A</div>
+                                    <div>
+                                        <div class="emp-name" th:text="${r.employee.fullName}">—</div>
+
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:text="${r.employee.email}">—</td>
+                            <td class="money-cell" th:text="${#numbers.formatInteger(r.netSalary, 3, 'COMMA')} + ' đ'">—</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${r.sendStatus.name() == 'SENT'} ? 'badge-green' :
+                                                      (${r.sendStatus.name() == 'FAILED'} ? 'badge-red' :
+                                                      (${r.sendStatus.name() == 'SENDING'} ? 'badge-yellow' : 'badge-gray'))"
+                                      th:text="${r.sendStatus.name() == 'SENT'} ? '✓ Đã gửi' :
+                                               (${r.sendStatus.name() == 'FAILED'} ? '✗ Lỗi' :
+                                               (${r.sendStatus.name() == 'SENDING'} ? '⟳ Đang gửi' : '○ Chưa gửi'))">
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentRecords)}">
+                            <td colspan="4" class="empty-cell">Chưa có dữ liệu phiếu lương tháng này</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: salary-system
+
+  # Database - H2 (dev mode)
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:file:./data/salarydb}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:password}
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Thymeleaf
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+
+  # Email Configuration (Gmail SMTP - thay thế bằng config thực tế)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tranhoan.word@gmail.com
+    password: vvpa lbfb cujx xrwn
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    default-encoding: UTF-8
+
+  # Servlet
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# Server
+server:
+  port: 8080
+  servlet:
+    context-path: /salary
+  error:
+    include-stacktrace: never
+
+# Application custom config
+app:
+  company:
+    name: "MV House"
+    logo-path: "static/images/logo.png"
+    address: "Thanh Thủy,Phú Thọ"
+    phone: "0985.875.082"
+
+  # PDF password pattern: số CCCD (012345678901,...)
+  pdf:
+    password-pattern: "#{identityCard}"
+    temp-dir: "./temp/payslips"
+
+  # Scheduler: Gửi lương vào ngày 25 hàng tháng lúc 08:00
+  scheduler:
+    send-payslip-cron: "0 0 8 25 * ?"
+    enabled: false
+
+logging:
+  level:
+    com.salary: DEBUG
+    org.springframework.mail: DEBUG

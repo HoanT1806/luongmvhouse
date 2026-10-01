@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu lương - Hệ thống Phiếu Lương</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo.png}">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img th:src="@{/images/logo.png}" alt="MV House Logo" style="width:44px;height:44px;object-fit:contain;border-radius:6px;">
+            <div>
+                <div class="sidebar-logo-title">MV House</div>
+                <div class="sidebar-logo-sub">v1.0.0</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/dashboard}" class="nav-item" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+            <a th:href="@{/employees}" class="nav-item" id="nav-employees"><span class="nav-icon">👥</span> Nhân viên</a>
+            <a th:href="@{/salary}" class="nav-item active" id="nav-salary"><span class="nav-icon">📋</span> Phiếu lương</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">⏻ Đăng xuất</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Phiếu lương</h1>
+                <p class="page-sub">Quản lý và gửi phiếu lương nhân viên</p>
+            </div>
+            <button class="btn btn-primary" id="btnAddSalary">
+                + Thêm phiếu lương
+            </button>
+        </div>
+
+        <!-- Alerts -->
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <!-- Month/Year Filter + Bulk Actions -->
+        <div class="card">
+            <div class="card-body">
+                <div class="filter-row">
+                    <form th:action="@{/salary}" method="get" class="filter-form" id="filterForm">
+                        <label class="filter-label">Tháng:</label>
+                        <select name="month" class="form-select" id="filterMonth" onchange="this.form.submit()">
+                            <option th:each="m : ${#numbers.sequence(1,12)}"
+                                    th:value="${m}" th:text="'Tháng ' + ${m}"
+                                    th:selected="${m == month}"></option>
+                        </select>
+                        <select name="year" class="form-select" id="filterYear" onchange="this.form.submit()">
+                            <option th:each="y : ${#numbers.sequence(2023, 2027)}"
+                                    th:value="${y}" th:text="${y}"
+                                    th:selected="${y == year}"></option>
+                        </select>
+                    </form>
+
+                    <div class="bulk-actions">
+                        <form th:action="@{/salary/send-all}" method="post" style="display:inline">
+                            <input type="hidden" name="month" th:value="${month}">
+                            <input type="hidden" name="year" th:value="${year}">
+                            <button type="submit" class="btn btn-green" id="btnSendAll"
+                                    onclick="confirmForm(event, 'Gửi tất cả phiếu lương chưa gửi?', 'success')"
+                                    th:disabled="${totalRecords == 0}">
+                                📨 Gửi tất cả (<span th:text="${totalRecords - totalSent}">0</span>)
+                            </button>
+                        </form>
+                        <form th:action="@{/salary/retry-failed}" method="post" style="display:inline">
+                            <input type="hidden" name="month" th:value="${month}">
+                            <input type="hidden" name="year" th:value="${year}">
+                            <button type="submit" class="btn btn-warning" id="btnRetry"
+                                    onclick="confirmForm(event, 'Gửi lại các phiếu bị lỗi?', 'warning')">
+                                🔄 Gửi lại lỗi
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-info" style="margin-top:16px" th:if="${totalRecords > 0}">
+                    <span th:text="'Đã gửi: ' + ${totalSent} + '/' + ${totalRecords}"></span>
+                    <span class="progress-pct"
+                          th:text="${totalRecords > 0 ? #numbers.formatInteger(totalSent * 100 / totalRecords, 0) : 0} + '%'">0%</span>
+                </div>
+                <div class="progress-bar-wrap" th:if="${totalRecords > 0}">
+                    <div class="progress-bar-fill" th:style="'width: ' + (${totalRecords > 0 ? totalSent * 100 / totalRecords : 0}) + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary Records Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📋 Phiếu lương tháng <span th:text="${month}"></span>/<span th:text="${year}"></span>
+                    (<span th:text="${#lists.size(records)}">0</span> bản ghi)
+                </h3>
+            </div>
+            <div class="card-body no-pad">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nhân viên</th>
+                            <th>Tổng thu nhập</th>
+                            <th>Khấu trừ</th>
+                            <th>Thực nhận</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${records}">
+                            <td>
+                                <div class="emp-cell">
+                                    <div class="emp-avatar" th:text="${#strings.substring(r.employee.fullName, 0, 1)}">A</div>
+                                    <div>
+                                        <div class="emp-name" th:text="${r.employee.fullName}">—</div>
+
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="money-cell income"
+                                th:text="${#numbers.formatInteger(r.grossSalary, 3, 'COMMA')} + ' đ'">—</td>
+                            <td class="money-cell deduct"
+                                th:text="'-' + ${#numbers.formatInteger(r.totalDeduction, 3, 'COMMA')} + ' đ'">—</td>
+                            <td class="money-cell net"
+                                th:text="${#numbers.formatInteger(r.netSalary, 3, 'COMMA')} + ' đ'">—</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${r.sendStatus.name() == 'SENT'} ? 'badge-green' :
+                                                      (${r.sendStatus.name() == 'FAILED'} ? 'badge-red' :
+                                                      (${r.sendStatus.name() == 'SENDING'} ? 'badge-yellow' : 'badge-gray'))"
+                                      th:text="${r.sendStatus.name() == 'SENT'} ? '✓ Đã gửi' :
+                                               (${r.sendStatus.name() == 'FAILED'} ? '✗ Lỗi' :
+                                               (${r.sendStatus.name() == 'SENDING'} ? '⟳ Đang gửi' : '○ Chưa gửi'))">
+                                </span>
+                                <div th:if="${r.sentAt != null}" class="sent-time"
+                                     th:text="'Lúc ' + ${#temporals.format(r.sentAt, 'HH:mm dd/MM')}"></div>
+                                <div th:if="${r.errorMessage != null}" class="error-tip"
+                                     th:title="${r.errorMessage}">⚠ Xem lỗi</div>
+                            </td>
+                            <td class="action-cell">
+                                <form th:action="@{/salary/send/{id}(id=${r.id})}" method="post" style="display:inline">
+                                    <input type="hidden" name="month" th:value="${month}">
+                                    <input type="hidden" name="year" th:value="${year}">
+                                    <button type="submit" class="btn btn-sm btn-green"
+                                            th:text="${r.sendStatus.name() == 'SENT'} ? '📨 Gửi lại' : '📨 Gửi'"
+                                            onclick="confirmForm(event, 'Xác nhận gửi phiếu lương?', 'success')">Gửi</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline" 
+                                        th:attr="onclick=|editSalary('${r.id}', '${r.employee.id}', '${r.salaryMonth}', '${r.salaryYear}', '${r.basicSalary}', '${r.allowance}', '${r.bonus}', '${r.overtime}', '${r.socialInsurance}', '${r.healthInsurance}', '${r.unemploymentInsurance}', '${r.incomeTax}', '${r.otherDeduction}')|">
+                                    ✏ Sửa
+                                </button>
+                                <form th:action="@{/salary/delete/{id}(id=${r.id})}" method="post" style="display:inline"
+                                      onsubmit="confirmForm(event, 'Xóa phiếu lương này?', 'danger')">
+                                    <input type="hidden" name="month" th:value="${month}">
+                                    <input type="hidden" name="year" th:value="${year}">
+                                    <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(records)}">
+                            <td colspan="6" class="empty-cell">Chưa có phiếu lương tháng này. Hãy thêm mới!</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add Salary Modal -->
+<div class="modal-overlay" id="salaryModal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3>Thêm phiếu lương</h3>
+            <button class="modal-close" onclick="hideModal('salaryModal')">✕</button>
+        </div>
+        <form th:action="@{/salary/save}" method="post" onsubmit="return cleanMoneyInputs()">
+            <input type="hidden" name="id" id="salaryId">
+            <div class="modal-body">
+                <!-- Basic Info -->
+                <div class="form-section-title">📌 Thông tin chung</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nhân viên <span class="required">*</span></label>
+                        <select name="employeeId" class="form-select" required id="selEmployee">
+                            <option value="">-- Chọn nhân viên --</option>
+                            <option th:each="emp : ${employees}"
+                                    th:value="${emp.id}"
+                                    th:text="${emp.fullName}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tháng <span class="required">*</span></label>
+                        <select name="salaryMonth" class="form-select" required id="selMonth">
+                            <option th:each="m : ${#numbers.sequence(1,12)}"
+                                    th:value="${m}" th:text="'Tháng ' + ${m}"
+                                    th:selected="${m == month}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Năm <span class="required">*</span></label>
+                        <select name="salaryYear" class="form-select" required id="selYear">
+                            <option th:each="y : ${#numbers.sequence(2023, 2027)}"
+                                    th:value="${y}" th:text="${y}"
+                                    th:selected="${y == year}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Income -->
+                <div class="form-section-title income-title">💚 Các khoản thu nhập</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lương cơ bản</label>
+                        <input type="text" name="basicSalary" value="0" class="form-input money-input" id="basicSalary" oninput="formatCurrency(this); autoCalcInsurances()">
+                    </div>
+                    <div class="form-group">
+                        <label>Phụ cấp</label>
+                        <input type="text" name="allowance" value="0" class="form-input money-input" id="allowance" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Thưởng</label>
+                        <input type="text" name="bonus" value="0" class="form-input money-input" id="bonus" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Làm thêm giờ</label>
+                        <input type="text" name="overtime" value="0" class="form-input money-input" id="overtime" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                </div>
+
+                <!-- Deductions -->
+                <div class="form-section-title deduct-title">❤ Các khoản khấu trừ</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>BHXH (8%)</label>
+                        <input type="text" name="socialInsurance" value="0" class="form-input money-input" id="si" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>BHYT (1.5%)</label>
+                        <input type="text" name="healthInsurance" value="0" class="form-input money-input" id="hi" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>BHTN (1%)</label>
+                        <input type="text" name="unemploymentInsurance" value="0" class="form-input money-input" id="ui" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Thuế TNCN</label>
+                        <input type="text" name="incomeTax" value="0" class="form-input money-input" id="it" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Khấu trừ khác</label>
+                        <input type="text" name="otherDeduction" value="0" class="form-input money-input" id="od" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="salary-preview">
+                    <div class="preview-item">
+                        <span>Tổng thu nhập:</span>
+                        <span class="preview-income" id="previewGross">0 đ</span>
+                    </div>
+                    <div class="preview-item">
+                        <span>Tổng khấu trừ:</span>
+                        <span class="preview-deduct" id="previewDeduct">0 đ</span>
+                    </div>
+                    <div class="preview-item preview-net">
+                        <span>💰 Thực nhận:</span>
+                        <span class="preview-net-val" id="previewNet">0 đ</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="hideModal('salaryModal')">Hủy</button>
+                <button type="submit" class="btn btn-primary" id="saveSalaryBtn">💾 Lưu phiếu lương</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/app.js}"></script>
+<script>
+function editSalary(id, empId, month, year, basic, allow, bonus, over, si, hi, ui, it, od) {
+    document.getElementById('salaryId').value = id;
+    document.getElementById('selEmployee').value = empId;
+    document.getElementById('selMonth').value = month;
+    document.getElementById('selYear').value = year;
+    
+    setMoneyValue('basicSalary', basic);
+    setMoneyValue('allowance', allow);
+    setMoneyValue('bonus', bonus);
+    setMoneyValue('overtime', over);
+    
+    setMoneyValue('si', si);
+    setMoneyValue('hi', hi);
+    setMoneyValue('ui', ui);
+    setMoneyValue('it', it);
+    setMoneyValue('od', od);
+    
+    calcTotal();
+    showModal('salaryModal');
+}
+
+function clearSalaryForm() {
+    document.getElementById('salaryId').value = '';
+    document.getElementById('selEmployee').value = '';
+    // keep month and year default
+    setMoneyValue('basicSalary', 0);
+    setMoneyValue('allowance', 0);
+    setMoneyValue('bonus', 0);
+    setMoneyValue('overtime', 0);
+    setMoneyValue('si', 0);
+    setMoneyValue('hi', 0);
+    setMoneyValue('ui', 0);
+    setMoneyValue('it', 0);
+    setMoneyValue('od', 0);
+    calcTotal();
+}
+
+document.getElementById('btnAddSalary').addEventListener('click', function() {
+    clearSalaryForm();
+    showModal('salaryModal');
+});
+
+function formatCurrency(input) {
+    let val = input.value.replace(/\D/g, '');
+    if (val === '') val = '0';
+    input.value = parseInt(val, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function getMoneyValue(id) {
+    return +(document.getElementById(id).value.replace(/\./g, '')) || 0;
+}
+
+function setMoneyValue(id, value) {
+    // format as int currency without decimal
+    let intValue = parseInt(value, 10) || 0;
+    document.getElementById(id).value = intValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function cleanMoneyInputs() {
+    document.querySelectorAll('.money-input').forEach(input => {
+        input.value = input.value.replace(/\./g, '');
+    });
+    return true;
+}
+
+function autoCalcInsurances() {
+    const base = getMoneyValue('basicSalary');
+    setMoneyValue('si', Math.round(base * 0.08));
+    setMoneyValue('hi', Math.round(base * 0.015));
+    setMoneyValue('ui', Math.round(base * 0.01));
+    calcTotal();
+}
+
+function calcTotal() {
+    const gross = getMoneyValue('basicSalary')
+        + getMoneyValue('allowance')
+        + getMoneyValue('bonus')
+        + getMoneyValue('overtime');
+    const deduct = getMoneyValue('si')
+        + getMoneyValue('hi')
+        + getMoneyValue('ui')
+        + getMoneyValue('it')
+        + getMoneyValue('od');
+    const net = gross - deduct;
+    const fmt = n => n.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('previewGross').textContent = fmt(gross);
+    document.getElementById('previewDeduct').textContent = fmt(deduct);
+    document.getElementById('previewNet').textContent = fmt(net);
+}
+</script>
+</body>
+</html>
