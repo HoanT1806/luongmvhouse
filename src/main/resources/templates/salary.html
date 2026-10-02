@@ -245,6 +245,7 @@
                     <div class="form-group">
                         <label>Sản lượng</label>
                         <input type="text" name="productivityOutput" value="0" class="form-input money-input" id="productivityOutput" oninput="formatCurrency(this); calcTotal()">
+                        <div id="productivityHint" style="font-size: 12px; color: #16a34a; margin-top: 6px; font-weight: 500;"></div>
                     </div>
                 </div>
 
@@ -387,11 +388,15 @@ function calcTotal() {
     
     let prodOut = getMoneyValue('productivityOutput');
     let prodSal = 0;
+    let multiplier = 1000;
     if (dept.includes('3d')) {
+        multiplier = 2000;
         prodSal = prodOut * 2000;
     } else if (dept.includes('kỹ thuật') || dept.includes('ky thuat')) {
+        multiplier = 1500;
         prodSal = prodOut * 1500;
     } else {
+        multiplier = 1000;
         prodSal = prodOut * 1000;
     }
 
@@ -407,6 +412,13 @@ function calcTotal() {
         + getMoneyValue('od');
     const net = gross - deduct;
     const fmt = n => n.toLocaleString('vi-VN') + ' đ';
+    
+    if (prodOut > 0) {
+        document.getElementById('productivityHint').textContent = `(Đơn giá: ${fmt(multiplier)} = ${fmt(prodSal)})`;
+    } else {
+        document.getElementById('productivityHint').textContent = '';
+    }
+
     document.getElementById('previewGross').textContent = fmt(gross);
     document.getElementById('previewDeduct').textContent = fmt(deduct);
     document.getElementById('previewNet').textContent = fmt(net);
