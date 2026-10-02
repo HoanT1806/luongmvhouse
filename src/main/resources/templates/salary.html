@@ -203,7 +203,7 @@
                     </div>
                     <div class="form-group">
                         <label>Tháng <span class="required">*</span></label>
-                        <select name="salaryMonth" class="form-select" required id="selMonth">
+                        <select name="salaryMonth" class="form-select" required id="selMonth" onchange="checkDisabledEmployees()">
                             <option th:each="m : ${#numbers.sequence(1,12)}"
                                     th:value="${m}" th:text="'Tháng ' + ${m}"
                                     th:selected="${m == month}"></option>
@@ -211,7 +211,7 @@
                     </div>
                     <div class="form-group">
                         <label>Năm <span class="required">*</span></label>
-                        <select name="salaryYear" class="form-select" required id="selYear">
+                        <select name="salaryYear" class="form-select" required id="selYear" onchange="checkDisabledEmployees()">
                             <option th:each="y : ${#numbers.sequence(2023, 2027)}"
                                     th:value="${y}" th:text="${y}"
                                     th:selected="${y == year}"></option>
@@ -346,23 +346,44 @@ function clearSalaryForm() {
     setMoneyValue('it', 0);
     setMoneyValue('od', 0);
     
-    // Tự động vô hiệu hóa nhân viên đã có phiếu lương trong tháng
-    const existingEmpIds = Array.from(document.querySelectorAll('button[onclick^="editSalary"]'))
-        .map(btn => {
-            const match = btn.getAttribute('onclick').match(/editSalary\('[^']+', '([^']+)'/);
-            return match ? match[1] : null;
-        }).filter(id => id !== null);
+    checkDisabledEmployees();
+    
+    calcTotal();
+}
 
+function checkDisabledEmployees() {
+    const isEdit = document.getElementById('salaryId').value !== '';
+    if (isEdit) {
+        // Nếu đang sửa thì không vô hiệu hóa nhân viên
+        const sel = document.getElementById('selEmployee');
+        for (let i = 1; i < sel.options.length; i++) {
+            sel.options[i].disabled = false;
+        }
+        return;
+    }
+
+    const tableMonth = document.getElementById('filterMonth').value;
+    const tableYear = document.getElementById('filterYear').value;
+    const modalMonth = document.getElementById('selMonth').value;
+    const modalYear = document.getElementById('selYear').value;
     const sel = document.getElementById('selEmployee');
-    for (let i = 1; i < sel.options.length; i++) {
-        if (existingEmpIds.includes(sel.options[i].value)) {
-            sel.options[i].disabled = true;
-        } else {
+
+    if (tableMonth === modalMonth && tableYear === modalYear) {
+        const existingEmpIds = Array.from(document.querySelectorAll('button[onclick^="editSalary"]'))
+            .map(btn => {
+                const match = btn.getAttribute('onclick').match(/editSalary\('[^']+', '([^']+)'/);
+                return match ? match[1] : null;
+            }).filter(id => id !== null);
+
+        for (let i = 1; i < sel.options.length; i++) {
+            sel.options[i].disabled = existingEmpIds.includes(sel.options[i].value);
+        }
+    } else {
+        // Khác tháng/năm hiện tại trên bảng, bỏ vô hiệu hóa
+        for (let i = 1; i < sel.options.length; i++) {
             sel.options[i].disabled = false;
         }
     }
-    
-    calcTotal();
 }
 
 document.getElementById('btnAddSalary').addEventListener('click', function() {
