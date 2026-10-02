@@ -156,7 +156,7 @@
                                             onclick="confirmForm(event, 'Xác nhận gửi phiếu lương?', 'success')">Gửi</button>
                                 </form>
                                 <button type="button" class="btn btn-sm btn-outline" 
-                                        th:attr="onclick=|editSalary('${r.id}', '${r.employee.id}', '${r.salaryMonth}', '${r.salaryYear}', '${r.basicSalary}', '${r.allowance}', '${r.bonus}', '${r.overtime}', '${r.socialInsurance}', '${r.healthInsurance}', '${r.unemploymentInsurance}', '${r.incomeTax}', '${r.otherDeduction}')|">
+                                        th:attr="onclick=|editSalary('${r.id}', '${r.employee.id}', '${r.salaryMonth}', '${r.salaryYear}', '${r.basicSalary}', '${r.allowance}', '${r.bonus}', '${r.overtime}', '${r.productivityOutput}', '${r.socialInsurance}', '${r.healthInsurance}', '${r.unemploymentInsurance}', '${r.incomeTax}', '${r.otherDeduction}')|">
                                     ✏ Sửa
                                 </button>
                                 <form th:action="@{/salary/delete/{id}(id=${r.id})}" method="post" style="display:inline"
@@ -192,10 +192,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nhân viên <span class="required">*</span></label>
-                        <select name="employeeId" class="form-select" required id="selEmployee">
+                        <select name="employeeId" class="form-select" required id="selEmployee" onchange="calcTotal()">
                             <option value="">-- Chọn nhân viên --</option>
                             <option th:each="emp : ${employees}"
                                     th:value="${emp.id}"
+                                    th:attr="data-dept=${emp.department}"
                                     th:text="${emp.fullName}">
                             </option>
                         </select>
@@ -238,6 +239,12 @@
                     <div class="form-group">
                         <label>Làm thêm giờ</label>
                         <input type="text" name="overtime" value="0" class="form-input money-input" id="overtime" oninput="formatCurrency(this); calcTotal()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sản lượng</label>
+                        <input type="text" name="productivityOutput" value="0" class="form-input money-input" id="productivityOutput" oninput="formatCurrency(this); calcTotal()">
                     </div>
                 </div>
 
@@ -295,7 +302,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script th:src="@{/js/app.js}"></script>
 <script>
-function editSalary(id, empId, month, year, basic, allow, bonus, over, si, hi, ui, it, od) {
+function editSalary(id, empId, month, year, basic, allow, bonus, over, prodOut, si, hi, ui, it, od) {
     document.getElementById('salaryId').value = id;
     document.getElementById('selEmployee').value = empId;
     document.getElementById('selMonth').value = month;
@@ -305,6 +312,7 @@ function editSalary(id, empId, month, year, basic, allow, bonus, over, si, hi, u
     setMoneyValue('allowance', allow);
     setMoneyValue('bonus', bonus);
     setMoneyValue('overtime', over);
+    setMoneyValue('productivityOutput', prodOut);
     
     setMoneyValue('si', si);
     setMoneyValue('hi', hi);
@@ -324,6 +332,7 @@ function clearSalaryForm() {
     setMoneyValue('allowance', 0);
     setMoneyValue('bonus', 0);
     setMoneyValue('overtime', 0);
+    setMoneyValue('productivityOutput', 0);
     setMoneyValue('si', 0);
     setMoneyValue('hi', 0);
     setMoneyValue('ui', 0);
@@ -369,10 +378,28 @@ function autoCalcInsurances() {
 }
 
 function calcTotal() {
+    let dept = '';
+    const sel = document.getElementById('selEmployee');
+    if (sel.selectedIndex > 0) {
+        dept = sel.options[sel.selectedIndex].getAttribute('data-dept') || '';
+    }
+    dept = dept.trim().toLowerCase();
+    
+    let prodOut = getMoneyValue('productivityOutput');
+    let prodSal = 0;
+    if (dept.includes('3d')) {
+        prodSal = prodOut * 2;
+    } else if (dept.includes('kỹ thuật') || dept.includes('ky thuat')) {
+        prodSal = prodOut * 1.5;
+    } else {
+        prodSal = prodOut;
+    }
+
     const gross = getMoneyValue('basicSalary')
         + getMoneyValue('allowance')
         + getMoneyValue('bonus')
-        + getMoneyValue('overtime');
+        + getMoneyValue('overtime')
+        + prodSal;
     const deduct = getMoneyValue('si')
         + getMoneyValue('hi')
         + getMoneyValue('ui')

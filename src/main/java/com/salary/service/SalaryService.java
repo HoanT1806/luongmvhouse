@@ -54,6 +54,7 @@ public class SalaryService {
         record.setAllowance(dto.getAllowance());
         record.setBonus(dto.getBonus());
         record.setOvertime(dto.getOvertime());
+        record.setProductivityOutput(dto.getProductivityOutput());
         record.setSocialInsurance(dto.getSocialInsurance());
         record.setHealthInsurance(dto.getHealthInsurance());
         record.setUnemploymentInsurance(dto.getUnemploymentInsurance());

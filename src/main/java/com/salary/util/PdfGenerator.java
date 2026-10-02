@@ -208,6 +208,7 @@ public class PdfGenerator {
         addRow(table, regular, "2", "Phụ cấp", record.getAllowance());
         addRow(table, regular, "3", "Thưởng", record.getBonus());
         addRow(table, regular, "4", "Làm thêm giờ", record.getOvertime());
+        addRow(table, regular, "5", "Lương sản lượng", record.getProductivitySalary());
         addTotalRow(table, bold, "", "TỔNG THU NHẬP", record.getGrossSalary(), redColor);
 
         // B. CÁC KHOẢN KHẤU TRỪ

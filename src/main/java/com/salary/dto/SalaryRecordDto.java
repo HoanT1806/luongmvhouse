@@ -24,6 +24,7 @@ public class SalaryRecordDto {
     private BigDecimal allowance = BigDecimal.ZERO;
     private BigDecimal bonus = BigDecimal.ZERO;
     private BigDecimal overtime = BigDecimal.ZERO;
+    private BigDecimal productivityOutput = BigDecimal.ZERO;
 
     private BigDecimal socialInsurance = BigDecimal.ZERO;
     private BigDecimal healthInsurance = BigDecimal.ZERO;
