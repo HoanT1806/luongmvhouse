@@ -22,5 +22,7 @@ public class EmployeeDto {
     @NotBlank(message = "CCCD không được để trống")
     private String identityCard;
     
+    private java.math.BigDecimal basicSalary = java.math.BigDecimal.ZERO;
+    
     private boolean active = true;
 }

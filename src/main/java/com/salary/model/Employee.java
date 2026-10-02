@@ -40,6 +40,10 @@ public class Employee {
     @Column(length = 12)
     private String identityCard;
 
+    @Column(precision = 15, scale = 2)
+    @Builder.Default
+    private java.math.BigDecimal basicSalary = java.math.BigDecimal.ZERO;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;

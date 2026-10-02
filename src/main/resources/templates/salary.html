@@ -192,11 +192,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nhân viên <span class="required">*</span></label>
-                        <select name="employeeId" class="form-select" required id="selEmployee" onchange="calcTotal()">
+                        <select name="employeeId" class="form-select" required id="selEmployee" onchange="onEmployeeSelectChange()">
                             <option value="">-- Chọn nhân viên --</option>
                             <option th:each="emp : ${employees}"
                                     th:value="${emp.id}"
-                                    th:attr="data-dept=${emp.department}"
+                                    th:attr="data-dept=${emp.department}, data-basic=${emp.basicSalary}"
                                     th:text="${emp.fullName}">
                             </option>
                         </select>
@@ -376,6 +376,18 @@ function autoCalcInsurances() {
     setMoneyValue('hi', Math.round(base * 0.015));
     setMoneyValue('ui', Math.round(base * 0.01));
     calcTotal();
+}
+
+function onEmployeeSelectChange() {
+    const sel = document.getElementById('selEmployee');
+    if (sel.selectedIndex > 0) {
+        let basic = sel.options[sel.selectedIndex].getAttribute('data-basic') || '0';
+        setMoneyValue('basicSalary', basic);
+        autoCalcInsurances();
+    } else {
+        setMoneyValue('basicSalary', 0);
+        autoCalcInsurances();
+    }
 }
 
 function calcTotal() {
