@@ -388,11 +388,11 @@ function calcTotal() {
     let prodOut = getMoneyValue('productivityOutput');
     let prodSal = 0;
     if (dept.includes('3d')) {
-        prodSal = prodOut * 2;
+        prodSal = prodOut * 2000;
     } else if (dept.includes('kỹ thuật') || dept.includes('ky thuat')) {
-        prodSal = prodOut * 1.5;
+        prodSal = prodOut * 1500;
     } else {
-        prodSal = prodOut;
+        prodSal = prodOut * 1000;
     }
 
     const gross = getMoneyValue('basicSalary')

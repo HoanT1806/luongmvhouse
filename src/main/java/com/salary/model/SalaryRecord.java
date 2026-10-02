@@ -125,11 +125,11 @@ public class SalaryRecord {
         if (productivityOutput != null && productivityOutput.compareTo(BigDecimal.ZERO) > 0) {
             String dept = employee != null && employee.getDepartment() != null ? employee.getDepartment().trim().toLowerCase() : "";
             if (dept.contains("3d")) {
-                this.productivitySalary = productivityOutput.multiply(new BigDecimal("2"));
+                this.productivitySalary = productivityOutput.multiply(new BigDecimal("2000"));
             } else if (dept.contains("kỹ thuật") || dept.contains("ky thuat")) {
-                this.productivitySalary = productivityOutput.multiply(new BigDecimal("1.5"));
+                this.productivitySalary = productivityOutput.multiply(new BigDecimal("1500"));
             } else {
-                this.productivitySalary = productivityOutput;
+                this.productivitySalary = productivityOutput.multiply(new BigDecimal("1000"));
             }
         } else {
             this.productivitySalary = BigDecimal.ZERO;
