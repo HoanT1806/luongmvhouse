@@ -224,7 +224,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Lương cơ bản</label>
-                        <input type="text" name="basicSalary" value="0" class="form-input money-input" id="basicSalary" oninput="formatCurrency(this); autoCalcInsurances()">
+                        <input type="text" name="basicSalary" value="0" class="form-input money-input" id="basicSalary" readonly style="background-color: #f8f9fa; color: #6c757d; cursor: not-allowed;">
                     </div>
                     <div class="form-group">
                         <label>Phụ cấp</label>
@@ -321,6 +321,12 @@ function editSalary(id, empId, month, year, basic, allow, bonus, over, prodOut, 
     setMoneyValue('it', it);
     setMoneyValue('od', od);
     
+    // Bỏ disable tất cả nhân viên khi sửa
+    const sel = document.getElementById('selEmployee');
+    for (let i = 1; i < sel.options.length; i++) {
+        sel.options[i].disabled = false;
+    }
+    
     calcTotal();
     showModal('salaryModal');
 }
@@ -339,6 +345,23 @@ function clearSalaryForm() {
     setMoneyValue('ui', 0);
     setMoneyValue('it', 0);
     setMoneyValue('od', 0);
+    
+    // Tự động vô hiệu hóa nhân viên đã có phiếu lương trong tháng
+    const existingEmpIds = Array.from(document.querySelectorAll('button[onclick^="editSalary"]'))
+        .map(btn => {
+            const match = btn.getAttribute('onclick').match(/editSalary\('[^']+', '([^']+)'/);
+            return match ? match[1] : null;
+        }).filter(id => id !== null);
+
+    const sel = document.getElementById('selEmployee');
+    for (let i = 1; i < sel.options.length; i++) {
+        if (existingEmpIds.includes(sel.options[i].value)) {
+            sel.options[i].disabled = true;
+        } else {
+            sel.options[i].disabled = false;
+        }
+    }
+    
     calcTotal();
 }
 
