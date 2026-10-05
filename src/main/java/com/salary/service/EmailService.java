@@ -27,7 +27,7 @@ public class EmailService {
     @Value("${app.company.name}")
     private String companyName;
 
-    private static final String SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ1TyPXqIvLTun63LXXS193iibxTB9C-6VtKmxfZUBrsOuqpFdjSwS2Q91kfhEqDMVgA/exec";
+    private static final String SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHMjfW2ICPUrbd45v71SmT9bBvxQRmfmNji6Cvwh_BXKxKMCjuvy06fYIjhEJK7oYuLA/exec";
 
     /**
      * Gửi phiếu lương PDF qua Google Apps Script API
