@@ -98,8 +98,7 @@
                                         th:data-cccd="${emp.identityCard}"
                                         th:data-dept="${emp.department ?: ''}"
                                         th:data-pos="${emp.position ?: ''}"
-                                        th:data-basic="${emp.basicSalary ?: 0}"
-                                        onclick="editEmployee(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-email'), this.getAttribute('data-cccd'), this.getAttribute('data-dept'), this.getAttribute('data-pos'), this.getAttribute('data-basic'))">
+                                        onclick="editEmployee(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-email'), this.getAttribute('data-cccd'), this.getAttribute('data-dept'), this.getAttribute('data-pos'))">
                                     ✏ Sửa
                                 </button>
                                 <form th:action="@{/employees/delete/{id}(id=${emp.id})}" method="post" style="display:inline"
@@ -161,10 +160,6 @@
                         <label>Chức vụ</label>
                         <input type="text" id="empPos" name="position" placeholder="Developer, Manager, ..." class="form-input">
                     </div>
-                    <div class="form-group">
-                        <label>Lương cơ bản <span class="required">*</span></label>
-                        <input type="text" id="empBasicSalary" name="basicSalary" placeholder="VD: 5.000.000" class="form-input money-input" oninput="formatCurrency(this)" required>
-                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -178,7 +173,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script th:src="@{/js/app.js}"></script>
 <script>
-function editEmployee(id, name, email, cccd, dept, pos, basic) {
+function editEmployee(id, name, email, cccd, dept, pos) {
     document.getElementById('modalTitle').textContent = 'Chỉnh sửa nhân viên';
     document.getElementById('empId').value = id;
     document.getElementById('empName').value = name;
@@ -186,8 +181,6 @@ function editEmployee(id, name, email, cccd, dept, pos, basic) {
     document.getElementById('empCccd').value = cccd;
     document.getElementById('empDept').value = dept;
     document.getElementById('empPos').value = pos;
-    let b = basic || 0;
-    document.getElementById('empBasicSalary').value = parseInt(b, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     showModal('addModal');
 }
 

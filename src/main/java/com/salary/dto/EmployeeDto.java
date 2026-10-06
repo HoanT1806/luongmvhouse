@@ -22,9 +22,6 @@ public class EmployeeDto {
     @NotBlank(message = "CCCD không được để trống")
     private String identityCard;
     
-    @jakarta.validation.constraints.NotNull(message = "Lương cơ bản không được để trống")
-    @jakarta.validation.constraints.Min(value = 0, message = "Lương cơ bản không hợp lệ")
-    private java.math.BigDecimal basicSalary = java.math.BigDecimal.ZERO;
-    
+
     private boolean active = true;
 }

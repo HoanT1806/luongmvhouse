@@ -54,13 +54,6 @@ public class SalaryRecord {
     @Builder.Default
     private BigDecimal overtime = BigDecimal.ZERO;           // Làm thêm giờ
 
-    @Column(precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal productivityOutput = BigDecimal.ZERO; // Khối lượng sản lượng
-
-    @Column(precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal productivitySalary = BigDecimal.ZERO; // Tiền lương sản lượng
 
     // === Các khoản khấu trừ ===
     @Column(precision = 15, scale = 2)
@@ -122,34 +115,21 @@ public class SalaryRecord {
      * Tự động tính toán lương khi save
      */
     public void calculateTotals() {
-        if (productivityOutput != null && productivityOutput.compareTo(BigDecimal.ZERO) > 0) {
-            String dept = employee != null && employee.getDepartment() != null ? employee.getDepartment().trim().toLowerCase() : "";
-            if (dept.contains("3d")) {
-                this.productivitySalary = productivityOutput.multiply(new BigDecimal("2000"));
-            } else if (dept.contains("kỹ thuật") || dept.contains("ky thuat")) {
-                this.productivitySalary = productivityOutput.multiply(new BigDecimal("1500"));
-            } else {
-                this.productivitySalary = productivityOutput.multiply(new BigDecimal("1000"));
-            }
-        } else {
-            this.productivitySalary = BigDecimal.ZERO;
-        }
 
         BigDecimal base = basicSalary != null ? basicSalary : BigDecimal.ZERO;
         this.grossSalary = base
                 .add(allowance != null ? allowance : BigDecimal.ZERO)
                 .add(bonus != null ? bonus : BigDecimal.ZERO)
-                .add(overtime != null ? overtime : BigDecimal.ZERO)
-                .add(productivitySalary != null ? productivitySalary : BigDecimal.ZERO);
+                .add(overtime != null ? overtime : BigDecimal.ZERO);
 
         // Tự động tính bảo hiểm nếu chưa có
-        if (socialInsurance == null || socialInsurance.compareTo(BigDecimal.ZERO) == 0) {
+        if (socialInsurance == null) {
             socialInsurance = base.multiply(new BigDecimal("0.08"));
         }
-        if (healthInsurance == null || healthInsurance.compareTo(BigDecimal.ZERO) == 0) {
+        if (healthInsurance == null) {
             healthInsurance = base.multiply(new BigDecimal("0.015"));
         }
-        if (unemploymentInsurance == null || unemploymentInsurance.compareTo(BigDecimal.ZERO) == 0) {
+        if (unemploymentInsurance == null) {
             unemploymentInsurance = base.multiply(new BigDecimal("0.01"));
         }
 

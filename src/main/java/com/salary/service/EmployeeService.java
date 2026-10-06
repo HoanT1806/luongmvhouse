@@ -46,7 +46,6 @@ public class EmployeeService {
                     .department(dto.getDepartment())
                     .position(dto.getPosition())
                     .identityCard(dto.getIdentityCard())
-                    .basicSalary(dto.getBasicSalary())
                     .active(true)
                     .build();
             return employeeRepository.save(employee);
@@ -58,7 +57,6 @@ public class EmployeeService {
             employee.setDepartment(dto.getDepartment());
             employee.setPosition(dto.getPosition());
             employee.setIdentityCard(dto.getIdentityCard());
-            employee.setBasicSalary(dto.getBasicSalary());
             employee.setActive(dto.isActive());
             return employeeRepository.save(employee);
         }
