@@ -205,7 +205,7 @@ public class PdfGenerator {
         // A. CÁC KHOẢN THU NHẬP
         addSectionHeader(table, bold, "A.", "CÁC KHOẢN THU NHẬP", redColor);
         addRow(table, regular, "1", "Lương cơ bản", record.getBasicSalary());
-        addRow(table, regular, "2", "Phụ cấp", record.getAllowance());
+        addRow(table, regular, "2", "Doanh số", record.getAllowance());
         addRow(table, regular, "3", "Thưởng", record.getBonus());
         addRow(table, regular, "4", "Làm thêm giờ", record.getOvertime());
 
