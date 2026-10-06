@@ -241,7 +241,7 @@
                         <input type="text" name="overtime" value="0" class="form-input money-input" id="overtime" oninput="formatCurrency(this); calcTotal()">
                     </div>
                 </div>
-                </div>
+
 
                 <!-- Deductions -->
                 <div class="form-section-title deduct-title">❤ Các khoản khấu trừ</div>
@@ -264,10 +264,13 @@
                         <label>Thuế TNCN</label>
                         <input type="text" name="incomeTax" value="0" class="form-input money-input" id="it" oninput="formatCurrency(this); calcTotal()">
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label>Khấu trừ khác</label>
                         <input type="text" name="otherDeduction" value="0" class="form-input money-input" id="od" oninput="formatCurrency(this); calcTotal()">
                     </div>
+                    <div class="form-group"></div>
                 </div>
 
                 <!-- Live Preview -->
